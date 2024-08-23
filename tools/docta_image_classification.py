@@ -23,7 +23,10 @@ cfg = Config.fromfile("./config/image_classification_data.py")
 cfg.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # preprocess the dataset, get embeddings
-data_path = lambda x: cfg.save_path + f"embedded_{cfg.dataset_type}_{x}.pt"
+data_path = (
+    lambda x: cfg.save_path
+    + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{x}.pt"
+)
 if not os.path.exists(data_path(0)):
     dataset = ImageDataset10Classes(cfg, train=True)
     test_dataset = None

@@ -24,7 +24,7 @@ def save_extracted_dataset(cfg, dataset_embedding, dataset_label, dataset_idx, s
 
     dataset = CustomizedDataset(feature=np.concatenate(dataset_embedding), label=dataset_label, index=np.concatenate(dataset_idx))
     os.makedirs(cfg.save_path, exist_ok=True)
-    save_path = cfg.save_path + f'embedded_{cfg.dataset_type}_{save_cnt}.pt'
+    save_path = cfg.save_path + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{save_cnt}.pt"
     torch.save(dataset, save_path)
     print(f'Save {len(dataset_idx)} instances to {save_path}')
 
@@ -140,7 +140,7 @@ class Preprocess:
         if cfg.feature_type == 'embedding':
             self.encode_feature() 
             print(self.save_ckpt_idx)
-            data_path = lambda x: cfg.save_path + f'embedded_{cfg.dataset_type}_{x}.pt'
+            data_path = lambda x: cfg.save_path + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{x}.pt"
             dataset, _ = load_embedding(self.save_ckpt_idx, data_path, duplicate=False)
             data = dataset.feature
         else:
