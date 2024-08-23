@@ -20,7 +20,7 @@ feature_type = "embedding"
 
 embedding_model = "hf-hub:imageomics/bioclip"
 embedding_cfg = dict(
-    save_num=50,
+    save_num=200,
     shuffle=False,
     batch_size=1024,
     num_workers=1,

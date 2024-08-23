@@ -27,15 +27,22 @@ data_path = (
     lambda x: cfg.save_path
     + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{x}.pt"
 )
+dataset = ImageDataset10Classes(cfg, train=True)
 if not os.path.exists(data_path(0)):
-    dataset = ImageDataset10Classes(cfg, train=True)
     test_dataset = None
     pre_processor = Preprocess(cfg, dataset, test_dataset)
     pre_processor.encode_feature()
     print(pre_processor.save_ckpt_idx)
     save_ckpt_idx = pre_processor.save_ckpt_idx
 else:
-    save_ckpt_idx = list(range(19))
+    save_ckpt_idx = list(
+        range(
+            min(
+                len(dataset) // cfg.embedding_cfg.batch_size,
+                cfg.embedding_cfg.save_num,
+            )
+        )
+    )
 
 
 dataset, _ = load_embedding(
@@ -68,8 +75,16 @@ label_curation = np.array(report.curation["label_curation"])
 
 
 # Save the array as torch tensors
-torch.save(label_error, os.path.join(cfg.save_path, "label_error.pt"))
-torch.save(label_curation, os.path.join(cfg.save_path, "label_curation.pt"))
+torch.save(
+    label_error,
+    os.path.join(cfg.save_path, f"{cfg.embedding_model.split('/')[-1]}_label_error.pt"),
+)
+torch.save(
+    label_curation,
+    os.path.join(
+        cfg.save_path, f"{cfg.embedding_model.split('/')[-1]}_label_curation.pt"
+    ),
+)
 
 # print results
 dataset_raw = ImageDataset10Classes(cfg, train=True)
