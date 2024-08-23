@@ -93,7 +93,7 @@ class Preprocess:
         self.test_dataset = test_dataset
     
     def get_encoder(self):
-        if 'CLIP' in self.cfg.embedding_model:
+        if 'clip' in self.cfg.embedding_model.lower():
             model_embedding, _, preprocess = open_clip.create_model_and_transforms(self.cfg.embedding_model)
             model_embedding.to(self.cfg.device)
 
