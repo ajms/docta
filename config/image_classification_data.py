@@ -4,6 +4,7 @@ dataset_type = "IMAGE_CLASSIFICATION"
 modality = "image"  # image, text, tabular
 num_classes = 10
 data_root = "data/image_data/2024-08-22_chilli_top_10"
+image_dir = "./data/image_data/2024-08-22_chilli_top_10"
 label_name = "expert_classification"
 
 

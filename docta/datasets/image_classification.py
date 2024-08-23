@@ -19,6 +19,7 @@ class ImageDataset(VisionDataset):
         self,
         image_metadata: pd.DataFrame,
         root: Path,
+        image_dir: Path,
         label_name: str,
         target_size: tuple[int, int] = (224, 224),
         transform: Callable | None = None,
@@ -26,7 +27,7 @@ class ImageDataset(VisionDataset):
     ):
         super().__init__(root, transform=transform, target_transform=target_transform)
         self.image_metadata = image_metadata
-        self.img_dir = root
+        self.image_dir = image_dir
         self.transform = transform
         self.target_transform = target_transform
         self.label_name = label_name
@@ -41,8 +42,8 @@ class ImageDataset(VisionDataset):
         self.batch = []
         batch_loaded = False
 
-        for idx, img in enumerate(
-            tqdm(self.image_metadata["filename"], desc="Processing Images")
+        for idx, img_path in enumerate(
+            tqdm(self.image_metadata["path"], desc="Processing Images")
         ):
             if idx < batch_number * batch_size and batch_loaded:
                 continue
@@ -63,7 +64,9 @@ class ImageDataset(VisionDataset):
 
             # Process image
             img_object = (
-                Image.open(self.img_dir / img).convert("RGB").resize(target_size)
+                Image.open(f"{self.image_dir}/{img_path}")
+                .convert("RGB")
+                .resize(target_size)
             )
             self.batch.append(np.array(img_object))
 
@@ -83,23 +86,21 @@ class ImageDataset(VisionDataset):
 
     def get_batch_filename(self, batch_number):
         filename = (
-            self.root.parent / f"{self.root.name}_batches" / f"{batch_number:03d}.h5"
+            self.root.parent / f"{self.root.name}_batches" / f"{batch_number:03d}.npy"
         )
         filename.parent.mkdir(parents=True, exist_ok=True)
         return filename
 
     def save_batch(self, batch_number):
         batch_filename = self.get_batch_filename(batch_number)
-        with h5py.File(batch_filename, "w") as f:
-            batch = np.stack(self.batch, axis=0)
-            f.create_dataset("dataset_name", data=batch, compression="gzip")
+        batch = np.stack(self.batch, axis=0)
+        np.save(batch_filename, batch)
         self.data.append(batch)
         if DEBUG:
             print(f"Saved {batch_filename}")
 
     def load_batch(self, batch_filename):
-        with h5py.File(batch_filename, "r") as f:
-            batch = f["dataset_name"][:]
+        batch = np.load(batch_filename)
         self.data.append(batch)
         if DEBUG:
             print(f"Loaded {batch_filename}")
@@ -151,6 +152,7 @@ class MultiLabelImageDataset(ImageDataset):
         image_metadata = pd.read_csv(root.with_suffix(".csv"))
         super().__init__(
             root=root,
+            image_dir=cfg.image_dir,
             label_name=cfg.label_name,
             image_metadata=image_metadata,
             transform=preprocess,
@@ -206,6 +208,7 @@ class ImageDataset10Classes(ImageDataset):
         image_metadata = pd.read_csv(root.with_suffix(".csv"))
         super().__init__(
             root=root,
+            image_dir=cfg.image_dir,
             label_name=cfg.label_name,
             image_metadata=image_metadata,
             transform=preprocess,
@@ -240,7 +243,10 @@ if __name__ == "__main__":
     root = get_project_root() / "data/image_data/2024-08-21_labelled_data"
     image_metadata = pd.read_csv(root.with_suffix(".csv"))
     ds = ImageDataset(
-        image_metadata=image_metadata, root=root, label_name="andjela_labels"
+        image_metadata=image_metadata,
+        root=root,
+        image_dir=root,
+        label_name="andjela_labels",
     )
     print(ds[0])
     cfg = Config.fromfile("./config/image_classification_data.py")

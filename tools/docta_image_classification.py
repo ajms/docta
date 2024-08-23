@@ -63,12 +63,10 @@ detector.detect()
 label_error = np.array(report.detection["label_error"])
 label_curation = np.array(report.curation["label_curation"])
 
-# Save the array in HDF5 format
-with h5py.File(os.path.join(cfg.save_path, "label_error.h5"), "w") as f:
-    f.create_dataset("dataset_name", data=label_error, compression="gzip")
 
-with h5py.File(os.path.join(cfg.save_path, "label_curation.h5"), "w") as f:
-    f.create_dataset("dataset_name", data=label_curation, compression="gzip")
+# Save the array as torch tensors
+torch.save(label_error, os.path.join(cfg.save_path, "label_error.pt"))
+torch.save(label_curation, os.path.join(cfg.save_path, "label_curation.pt"))
 
 # print results
 dataset_raw = ImageDataset10Classes(cfg, train=True)
