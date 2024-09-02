@@ -1,6 +1,7 @@
 # dataset settings
 seed = 0
 dataset_type = "IMAGE_CLASSIFICATION"
+crop = "PEPPER"
 modality = "image"  # image, text, tabular
 num_classes = 10
 data_root = "data/image_data/2024-08-22_chilli_top_10"
@@ -22,7 +23,7 @@ embedding_model = "hf-hub:imageomics/bioclip"
 embedding_cfg = dict(
     save_num=200,
     shuffle=False,
-    batch_size=1024,
+    batch_size=128,
     num_workers=1,
 )
 
@@ -30,7 +31,7 @@ embedding_cfg = dict(
 accuracy = dict(topk=1, threth=0.5)
 n_epoch = 10
 print_freq = 390
-details = False
+details = True
 
 train_cfg = dict(
     shuffle=True,
@@ -52,12 +53,14 @@ hoc_cfg = dict(
     max_step=1501,
     T0=None,
     p0=None,
-    lr=0.1,
+    lr=0.05,
     num_rounds=50,
-    sample_size=35000,
+    sample_size=11_000,
     already_2nn=False,
     device="cpu",
 )
 
 
-detect_cfg = dict(num_epoch=21, sample_size=35000, k=10, name="simifeat", method="rank")
+detect_cfg = dict(
+    num_epoch=51, sample_size=11_000, k=10, name="simifeat", method="rank"
+)

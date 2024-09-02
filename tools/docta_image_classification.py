@@ -25,7 +25,7 @@ cfg.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # preprocess the dataset, get embeddings
 data_path = (
     lambda x: cfg.save_path
-    + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{x}.pt"
+    + f"embedded_{cfg.dataset_type}_{cfg.embedding_model.split('/')[-1]}_{cfg.crop}_{x}.pt"
 )
 dataset = ImageDataset10Classes(cfg, train=True)
 if not os.path.exists(data_path(0)):
@@ -77,12 +77,15 @@ label_curation = np.array(report.curation["label_curation"])
 # Save the array as torch tensors
 torch.save(
     label_error,
-    os.path.join(cfg.save_path, f"{cfg.embedding_model.split('/')[-1]}_label_error.pt"),
+    os.path.join(
+        cfg.save_path, f"{cfg.embedding_model.split('/')[-1]}_{cfg.crop}_label_error.pt"
+    ),
 )
 torch.save(
     label_curation,
     os.path.join(
-        cfg.save_path, f"{cfg.embedding_model.split('/')[-1]}_label_curation.pt"
+        cfg.save_path,
+        f"{cfg.embedding_model.split('/')[-1]}_{cfg.crop}_label_curation.pt",
     ),
 )
 

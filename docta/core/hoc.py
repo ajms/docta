@@ -13,7 +13,7 @@ smt = torch.nn.Softmax(dim=1)
 
 
 def consensus_analytical(cfg, T, P, mode):
-    r""" Compute the first-, second-, and third-order of consensus matrices.
+    r"""Compute the first-, second-, and third-order of consensus matrices.
     Args:
         cfg: configuration
         T : noise transition matrix
@@ -22,7 +22,7 @@ def consensus_analytical(cfg, T, P, mode):
     Return:
         c_analytical[0] : first-order consensus
         c_analytical[1] : second-order consensus
-        c_analytical[2] : third-order consensus 
+        c_analytical[2] : third-order consensus
     """
 
     KINDS = cfg.num_classes
@@ -36,8 +36,7 @@ def consensus_analytical(cfg, T, P, mode):
     for i in range(KINDS):
         Ti = torch.cat((T[:, i:], T[:, :i]), 1)
         temp2 = torch.mm((T * Ti).transpose(0, 1), P)
-        c_analytical[1] = torch.cat(
-            [c_analytical[1], temp2], 1) if i != 0 else temp2
+        c_analytical[1] = torch.cat([c_analytical[1], temp2], 1) if i != 0 else temp2
 
         for j in range(KINDS):
             Tj = torch.cat((T[:, j:], T[:, :j]), 1)
@@ -46,11 +45,11 @@ def consensus_analytical(cfg, T, P, mode):
         # adjust the order of the output (N*N*N), keeping consistent with c_est
         t3 = []
         for p3 in range(KINDS):
-            t3 = torch.cat((temp33[p3, KINDS - p3:], temp33[p3, :KINDS - p3]))
+            t3 = torch.cat((temp33[p3, KINDS - p3 :], temp33[p3, : KINDS - p3]))
             temp33[p3] = t3
         if mode == -1:
             for r in range(KINDS):
-                c_analytical[2][r][(i+r+KINDS) % KINDS] = temp33[r]
+                c_analytical[2][r][(i + r + KINDS) % KINDS] = temp33[r]
         else:
             c_analytical[2][mode][(i + mode + KINDS) % KINDS] = temp33[mode]
 
@@ -58,14 +57,14 @@ def consensus_analytical(cfg, T, P, mode):
     temp = []
     for p1 in range(KINDS):
         temp = torch.cat(
-            (c_analytical[1][p1, KINDS-p1:], c_analytical[1][p1, :KINDS-p1]))
+            (c_analytical[1][p1, KINDS - p1 :], c_analytical[1][p1, : KINDS - p1])
+        )
         c_analytical[1][p1] = temp
     return c_analytical
 
 
 def func(cfg, c_est, T_out, P_out):
-    """ Compute the loss of estimated consensus matrices
-    """
+    """Compute the loss of estimated consensus matrices"""
     hoc_cfg = cfg.hoc_cfg
     loss = torch.tensor(0.0).to(hoc_cfg.device)  # initialize the loss
 
@@ -77,8 +76,7 @@ def func(cfg, c_est, T_out, P_out):
 
     # Borrow p_ The calculation method of real is to calculate the temporary values of T and P at
     # this time: N, N*N, N*N*N
-    c_ana = consensus_analytical(
-        cfg, T.to(hoc_cfg.device), P.to(hoc_cfg.device), mode)
+    c_ana = consensus_analytical(cfg, T.to(hoc_cfg.device), P.to(hoc_cfg.device), mode)
 
     # weight for differet orders of consensus patterns
     weight = [1.0, 1.0, 1.0]
@@ -91,8 +89,7 @@ def func(cfg, c_est, T_out, P_out):
 
 
 def calc_func(cfg, c_est):
-    """ Optimize over the noise transition matrix T and prior P
-    """
+    """Optimize over the noise transition matrix T and prior P"""
 
     N = cfg.num_classes
     hoc_cfg = cfg.hoc_cfg
@@ -110,7 +107,7 @@ def calc_func(cfg, c_est):
     T = T.to(hoc_cfg.device)
     P = P.to(hoc_cfg.device)
     c_est = [item.to(hoc_cfg.device) for item in c_est]
-    print(f'Use {hoc_cfg.device} to solve equations')
+    print(f"Use {hoc_cfg.device} to solve equations")
 
     T.requires_grad = True
     P.requires_grad = True
@@ -137,24 +134,30 @@ def calc_func(cfg, c_est):
 
         if cfg.details:  # print log
             if step % 100 == 0:
-                print('loss {}'.format(loss))
-                print(f'step: {step}  time_cost: {time.time() - time1}')
+                print("loss {}".format(loss))
+                print(f"step: {step}  time_cost: {time.time() - time1}")
+                print(f"T {np.round(smt(T.cpu()).detach().numpy()*100,1)}", flush=True)
                 print(
-                    f'T {np.round(smt(T.cpu()).detach().numpy()*100,1)}', flush=True)
-                print(
-                    f'P {np.round(smp(P.cpu().view(-1)).detach().numpy()*100,1)}', flush=True)
+                    f"P {np.round(smp(P.cpu().view(-1)).detach().numpy()*100,1)}",
+                    flush=True,
+                )
                 time1 = time.time()
-    print(f'Solve equations... [Done]')
+    print(f"Solve equations... [Done]")
     return loss_min, smt(T_rec).detach(), smp(P_rec).detach(), T_rec.detach()
 
 
-def get_consensus_patterns(dataset, sample, k=1+2):
-    """ KNN estimation
-    """
-    feature = dataset.feature if isinstance(
-        dataset.feature, torch.Tensor) else torch.tensor(dataset.feature)
-    label = dataset.label if isinstance(
-        dataset.label, torch.Tensor) else torch.tensor(dataset.label)
+def get_consensus_patterns(dataset, sample, k=1 + 2):
+    """KNN estimation"""
+    feature = (
+        dataset.feature
+        if isinstance(dataset.feature, torch.Tensor)
+        else torch.tensor(dataset.feature)
+    )
+    label = (
+        dataset.label
+        if isinstance(dataset.label, torch.Tensor)
+        else torch.tensor(dataset.label)
+    )
     feature = feature[sample]
     label = label[sample]
     dist = cosDistance(feature.float())
@@ -164,8 +167,7 @@ def get_consensus_patterns(dataset, sample, k=1+2):
 
 
 def consensus_counts(cfg, consensus_patterns):
-    """ Count the consensus
-    """
+    """Count the consensus"""
     KINDS = cfg.num_classes
 
     cnt = [[] for _ in range(3)]
@@ -182,9 +184,8 @@ def consensus_counts(cfg, consensus_patterns):
 
 
 def estimator_hoc(cfg, dataset):
-    """ HOC estimator
-    """
-    print('Estimating consensus patterns...')
+    """HOC estimator"""
+    print("Estimating consensus patterns...")
 
     KINDS = cfg.num_classes
 
@@ -200,24 +201,23 @@ def estimator_hoc(cfg, dataset):
         sample_size = np.min((cfg.hoc_cfg.sample_size, sample_size))
 
     for idx in tqdm(range(cfg.hoc_cfg.num_rounds)):
-        if cfg.details:
-            print(idx, flush=True)
 
-        sample = np.random.choice(
-            range(len(dataset)), sample_size, replace=False)
+        sample = np.random.choice(range(len(dataset)), sample_size, replace=False)
 
         if not cfg.hoc_cfg.already_2nn:
-            consensus_patterns_sample, _ = get_consensus_patterns(
-                dataset, sample)
+            consensus_patterns_sample, _ = get_consensus_patterns(dataset, sample)
         else:
-            consensus_patterns_sample = torch.tensor(dataset.consensus_patterns)[sample] if isinstance(
-                dataset.consensus_patterns, list) else dataset.consensus_patterns[sample]
+            consensus_patterns_sample = (
+                torch.tensor(dataset.consensus_patterns)[sample]
+                if isinstance(dataset.consensus_patterns, list)
+                else dataset.consensus_patterns[sample]
+            )
         cnt_y_3 = consensus_counts(cfg, consensus_patterns_sample)
         for i in range(3):
             cnt_y_3[i] /= sample_size
             c_est[i] = c_est[i] + cnt_y_3[i] if idx != 0 else cnt_y_3[i]
 
-    print('Estimating consensus patterns... [Done]')
+    print("Estimating consensus patterns... [Done]")
 
     for j in range(3):
         c_est[j] = c_est[j] / cfg.hoc_cfg.num_rounds
